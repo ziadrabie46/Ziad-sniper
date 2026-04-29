@@ -4,7 +4,6 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http, { cors: { origin: "*" } });
 const path = require('path');
 
-// تشغيل الملفات من مجلد public
 app.use(express.static(path.join(__dirname, 'public')));
 
 let players = {};
@@ -39,4 +38,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => console.log('Server is running on port ' + PORT));
+http.listen(PORT, () => console.log('Server is running!'));
