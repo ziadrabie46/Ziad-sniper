@@ -2,37 +2,51 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>أساطير القلعة: زومبي شوتر 🧟</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>أساطير القلعة 🧟</title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <style>
-        body { margin: 0; background: #0a0a0a; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
-        #ui-layer { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
-        .stat-box { background: rgba(0,0,0,0.7); border-left: 5px solid #fbbf24; padding: 10px 20px; margin-bottom: 10px; border-radius: 0 10px 10px 0; }
-        #shop-menu { position: absolute; right: 20px; top: 20px; background: rgba(20,20,20,0.9); border: 2px solid #fbbf24; padding: 15px; border-radius: 15px; display: none; }
-        .shop-btn { background: #fbbf24; color: black; border: none; padding: 8px; margin: 5px 0; cursor: pointer; width: 100%; font-weight: bold; border-radius: 5px; }
-        .shop-btn:disabled { background: #555; }
-        #joystick-container { position: absolute; bottom: 30px; left: 30px; display: none; }
-        #fire-btn { position: absolute; bottom: 40px; right: 40px; width: 100px; height: 100px; background: radial-gradient(#ff4444, #990000); border-radius: 50%; border: 5px solid white; display: none; justify-content: center; align-items: center; font-size: 40px; color: white; box-shadow: 0 0 20px red; }
+        body { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: sans-serif; }
+        #ui-layer { position: absolute; top: 10px; left: 10px; z-index: 100; pointer-events: none; }
+        .stat { background: rgba(0,0,0,0.8); color: #fbbf24; padding: 5px 15px; margin: 5px; border-left: 4px solid #fbbf24; border-radius: 4px; font-size: 14px; }
+        #login-overlay { position: absolute; width: 100%; height: 100%; background: #111; z-index: 1000; display: flex; justify-content: center; align-items: center; }
+        .login-box { background: #222; padding: 30px; border-radius: 15px; border: 2px solid #fbbf24; text-align: center; color: white; }
+        input { padding: 10px; width: 80%; margin: 10px; border-radius: 5px; border: none; }
+        button { background: #fbbf24; color: black; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
+
+    <div id="login-overlay">
+        <div class="login-box">
+            <h2>قناص الدراسات 🎯</h2>
+            <input type="text" id="pName" placeholder="اسمك البطل">
+            <input type="text" id="pRoom" placeholder="رقم الغرفة">
+            <br>
+            <button onclick="start()">دخول اللعبة</button>
+        </div>
+    </div>
+
     <div id="ui-layer">
-        <div class="stat-box">💰 النقط: <span id="score-val">0</span></div>
-        <div class="stat-box">🔋 الرصاص: <span id="ammo-val">15</span></div>
-        <div class="stat-box">❤️ دمك: <span id="hp-val">100</span></div>
-        <div class="stat-box">🏰 القلعة: <span id="castle-val">500</span></div>
+        <div class="stat">💰 النقط: <span id="score">0</span></div>
+        <div class="stat">🔋 الرصاص: <span id="ammo">15</span></div>
+        <div class="stat">❤️ دمك: <span id="hp">100</span></div>
+        <div class="stat">🏰 القلعة: <span id="castle">500</span></div>
     </div>
-
-    <div id="shop-menu">
-        <h3 style="margin-top:0">المتجر 🛒</h3>
-        <button class="shop-btn" onclick="buyMine()">لغم أرضي (500$)</button>
-        <button class="shop-btn" onclick="buyHealth()">إسعافات (300$)</button>
-        <button class="shop-btn" onclick="closeShop()">إغلاق</button>
-    </div>
-
-    <div id="fire-btn" onclick="shoot()">🔥</div>
 
     <script src="script.js"></script>
+    <script>
+        function start() {
+            let n = document.getElementById('pName').value;
+            let r = document.getElementById('pRoom').value;
+            if(n && r) {
+                document.getElementById('login-overlay').style.display = 'none';
+                startMultiplayer(n, r); // دي اللي في ملف script.js
+            } else {
+                alert("اكتب اسمك والروم الأول يا بطل!");
+            }
+        }
+    </script>
 </body>
 </html>
