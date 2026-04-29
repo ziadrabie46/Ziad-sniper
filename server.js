@@ -1,9 +1,7 @@
 const express = require('express');
 const app = express();
 const http = require('http').Server(app);
-const io = require('socket.io')(http, {
-  cors: { origin: "*" } // عشان يسمح لأي حد يدخل
-});
+const io = require('socket.io')(http, { cors: { origin: "*" } });
 const path = require('path');
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -13,7 +11,14 @@ let players = {};
 io.on('connection', (socket) => {
     socket.on('join', (data) => {
         socket.join(data.room);
-        players[socket.id] = { id: socket.id, name: data.name, room: data.room, x: 1500, y: 1500 };
+        players[socket.id] = { 
+            id: socket.id, 
+            name: data.name, 
+            room: data.room, 
+            x: 1500, 
+            y: 1500, 
+            angle: 0 
+        };
         io.to(data.room).emit('currentPlayers', players);
     });
 
@@ -21,6 +26,7 @@ io.on('connection', (socket) => {
         if (players[socket.id]) {
             players[socket.id].x = data.x;
             players[socket.id].y = data.y;
+            players[socket.id].angle = data.angle;
             socket.to(players[socket.id].room).emit('playerMoved', players[socket.id]);
         }
     });
@@ -32,4 +38,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => console.log('Server running on port ' + PORT));
+http.listen(PORT, () => console.log('Server is running!'));
