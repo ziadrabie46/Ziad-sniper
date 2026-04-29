@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>قناص الدراسات - مالتي بلاير</title>
+    <title>قناص الدراسات - القتال</title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <style>
@@ -13,11 +13,12 @@
         input { padding: 10px; border-radius: 8px; border: none; width: 90%; margin: 8px 0; text-align: center; }
         .btn { background: #fbbf24; color: black; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; border: none; width: 100%; }
         
-        /* أزرار الموبايل */
-        #mobile-controls { position: absolute; bottom: 30px; left: 20px; z-index: 500; display: none; }
-        .joy-grid { display: grid; grid-template-columns: repeat(3, 65px); gap: 10px; }
-        .joy-btn { width: 65px; height: 65px; background: rgba(255,255,255,0.2); border: 2px solid white; border-radius: 50%; color: white; font-size: 24px; display: flex; align-items: center; justify-content: center; user-select: none; }
-        .joy-btn:active { background: rgba(255,255,255,0.5); }
+        #mobile-controls { position: absolute; bottom: 20px; left: 20px; z-index: 500; display: none; }
+        .joy-grid { display: grid; grid-template-columns: repeat(3, 60px); gap: 10px; }
+        .joy-btn { width: 60px; height: 60px; background: rgba(255,255,255,0.2); border: 2px solid white; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; user-select: none; font-size: 20px; }
+        
+        /* زر الضرب */
+        #shoot-btn { position: absolute; bottom: 40px; right: 30px; width: 80px; height: 80px; background: rgba(255, 50, 50, 0.6); border: 3px solid white; border-radius: 50%; color: white; font-weight: bold; z-index: 500; display: none; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -27,7 +28,7 @@
             <h2 style="color: #fbbf24;">قناص الدراسات 🎯</h2>
             <input type="text" id="uname" placeholder="اسمك">
             <input type="text" id="uroom" placeholder="رقم الروم">
-            <button class="btn" onclick="enterGame()">ابدأ الآن</button>
+            <button class="btn" onclick="enterGame()">ابدأ القتال</button>
         </div>
     </div>
 
@@ -38,6 +39,8 @@
         </div>
     </div>
 
+    <div id="shoot-btn">🔥</div>
+
     <script src="script.js"></script>
     <script>
         function enterGame() {
@@ -45,8 +48,8 @@
             let r = document.getElementById('uroom').value;
             if(n && r) {
                 document.getElementById('login-screen').style.display = 'none';
-                // إظهار التحكم إذا كان موبايل (اختياري)
                 document.getElementById('mobile-controls').style.display = 'block';
+                document.getElementById('shoot-btn').style.display = 'flex';
                 startMultiplayer(n, r);
             }
         }
