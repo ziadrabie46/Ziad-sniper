@@ -2,51 +2,37 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>قناص الدراسات - حامي القلعة 🏰</title>
+    <title>أساطير القلعة: زومبي شوتر 🧟</title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; background: #0f172a; touch-action: none; font-family: sans-serif; }
-        #login-screen { position: absolute; width: 100%; height: 100%; background: #1e293b; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        .box { background: #334155; padding: 25px; border-radius: 15px; text-align: center; border: 3px solid #fbbf24; width: 85%; max-width: 320px; }
-        input { padding: 12px; border-radius: 8px; border: none; width: 90%; margin: 10px 0; text-align: center; font-size: 16px; }
-        .btn { background: #fbbf24; color: black; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; border: none; width: 100%; font-size: 18px; }
-        #mobile-controls { position: absolute; bottom: 20px; left: 20px; z-index: 500; display: none; }
-        .joy-grid { display: grid; grid-template-columns: repeat(3, 60px); gap: 10px; }
-        .joy-btn { width: 60px; height: 60px; background: rgba(255,255,255,0.2); border: 2px solid white; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 22px; user-select: none; }
-        #shoot-btn { position: absolute; bottom: 35px; right: 25px; width: 85px; height: 85px; background: rgba(255, 50, 50, 0.7); border: 4px solid white; border-radius: 50%; color: white; font-size: 30px; z-index: 500; display: none; align-items: center; justify-content: center; user-select: none; }
+        body { margin: 0; background: #0a0a0a; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
+        #ui-layer { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
+        .stat-box { background: rgba(0,0,0,0.7); border-left: 5px solid #fbbf24; padding: 10px 20px; margin-bottom: 10px; border-radius: 0 10px 10px 0; }
+        #shop-menu { position: absolute; right: 20px; top: 20px; background: rgba(20,20,20,0.9); border: 2px solid #fbbf24; padding: 15px; border-radius: 15px; display: none; }
+        .shop-btn { background: #fbbf24; color: black; border: none; padding: 8px; margin: 5px 0; cursor: pointer; width: 100%; font-weight: bold; border-radius: 5px; }
+        .shop-btn:disabled { background: #555; }
+        #joystick-container { position: absolute; bottom: 30px; left: 30px; display: none; }
+        #fire-btn { position: absolute; bottom: 40px; right: 40px; width: 100px; height: 100px; background: radial-gradient(#ff4444, #990000); border-radius: 50%; border: 5px solid white; display: none; justify-content: center; align-items: center; font-size: 40px; color: white; box-shadow: 0 0 20px red; }
     </style>
 </head>
 <body>
-    <div id="login-screen">
-        <div class="box">
-            <h2 style="color: #fbbf24;">قناص الدراسات 🎯</h2>
-            <p>احمِ القلعة وأجب عن الأسئلة للبقاء حياً!</p>
-            <input type="text" id="uname" placeholder="اسمك">
-            <input type="text" id="uroom" placeholder="رقم الروم">
-            <button class="btn" onclick="enterGame()">ابدأ الدفاع</button>
-        </div>
+    <div id="ui-layer">
+        <div class="stat-box">💰 النقط: <span id="score-val">0</span></div>
+        <div class="stat-box">🔋 الرصاص: <span id="ammo-val">15</span></div>
+        <div class="stat-box">❤️ دمك: <span id="hp-val">100</span></div>
+        <div class="stat-box">🏰 القلعة: <span id="castle-val">500</span></div>
     </div>
-    <div id="mobile-controls">
-        <div class="joy-grid">
-            <div></div><div class="joy-btn" id="btn-u">↑</div><div></div>
-            <div class="joy-btn" id="btn-l">←</div><div class="joy-btn" id="btn-d">↓</div><div class="joy-btn" id="btn-r">→</div>
-        </div>
+
+    <div id="shop-menu">
+        <h3 style="margin-top:0">المتجر 🛒</h3>
+        <button class="shop-btn" onclick="buyMine()">لغم أرضي (500$)</button>
+        <button class="shop-btn" onclick="buyHealth()">إسعافات (300$)</button>
+        <button class="shop-btn" onclick="closeShop()">إغلاق</button>
     </div>
-    <div id="shoot-btn">🔥</div>
+
+    <div id="fire-btn" onclick="shoot()">🔥</div>
+
     <script src="script.js"></script>
-    <script>
-        function enterGame() {
-            let n = document.getElementById('uname').value;
-            let r = document.getElementById('uroom').value;
-            if(n && r) {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('mobile-controls').style.display = 'block';
-                document.getElementById('shoot-btn').style.display = 'flex';
-                startMultiplayer(n, r);
-            }
-        }
-    </script>
 </body>
 </html>
