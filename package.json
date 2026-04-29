@@ -1,7 +1,7 @@
 {
-  "name": "ziad-sniper-final",
+  "name": "ziad-sniper-game",
   "version": "1.0.0",
-  "description": "Multiplayer Zombie Game",
+  "description": "Multiplayer Game for Ziad",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
