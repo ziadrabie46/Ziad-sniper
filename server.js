@@ -12,9 +12,9 @@ io.on('connection', (socket) => {
     socket.on('join', (data) => {
         socket.join(data.room);
         if (!rooms[data.room]) {
-            rooms[data.room] = { players: {}, zombies: [], score: 0, level: 1, castleHP: 500 };
+            rooms[data.room] = { players: {}, score: 0 };
         }
-        rooms[data.room].players[socket.id] = { id: socket.id, name: data.name, x: 1500, y: 1500, angle: 0, hp: 100 };
+        rooms[data.room].players[socket.id] = { id: socket.id, name: data.name, x: 1500, y: 1500, angle: 0 };
         io.to(data.room).emit('updateState', rooms[data.room]);
     });
 
@@ -36,14 +36,4 @@ io.on('connection', (socket) => {
     });
 });
 
-setInterval(() => {
-    for (let r in rooms) {
-        if (Object.keys(rooms[r].players).length > 0 && rooms[r].zombies.length < 10) {
-            let z = { id: Math.random(), x: Math.random()*3000, y: Math.random()*3000 };
-            rooms[r].zombies.push(z);
-            io.to(r).emit('newZombie', z);
-        }
-    }
-}, 3000);
-
-http.listen(3000, () => console.log('Battle Logic Ready!'));
+http.listen(process.env.PORT || 3000, () => console.log('Server is running!'));
