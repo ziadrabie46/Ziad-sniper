@@ -4,6 +4,7 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http, { cors: { origin: "*" } });
 const path = require('path');
 
+// السيرفر بيقرأ الملفات من مجلد اسمه public
 app.use(express.static(path.join(__dirname, 'public')));
 
 let players = {};
@@ -27,6 +28,7 @@ io.on('connection', (socket) => {
             players[socket.id].x = data.x;
             players[socket.id].y = data.y;
             players[socket.id].angle = data.angle;
+            // إرسال التحديث لبقية اللاعبين في نفس الروم فقط
             socket.to(players[socket.id].room).emit('playerMoved', players[socket.id]);
         }
     });
@@ -38,4 +40,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => console.log('Server is running!'));
+http.listen(PORT, () => console.log('Server running on port ' + PORT));
