@@ -3,52 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>قناص الدراسات أونلاين</title>
+    <title>قناص الدراسات - مالتي بلاير</title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; background: #0f172a; touch-action: none; font-family: sans-serif; }
-        #login-screen { position: absolute; width: 100%; height: 100%; background: #1e293b; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        .box { background: #334155; padding: 25px; border-radius: 15px; text-align: center; border: 3px solid #fbbf24; width: 85%; max-width: 320px; }
-        input { padding: 12px; border-radius: 8px; border: none; width: 90%; margin: 10px 0; text-align: center; font-size: 16px; }
-        .btn { background: #fbbf24; color: black; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; border: none; width: 100%; font-size: 18px; }
-        
-        /* تصميم أزرار التحكم */
-        #controls { position: absolute; bottom: 40px; left: 25px; z-index: 500; display: none; }
-        .joy-grid { display: grid; grid-template-columns: repeat(3, 70px); gap: 12px; }
-        .joy-btn { width: 70px; height: 70px; background: rgba(255,255,255,0.15); border: 2px solid white; border-radius: 50%; color: white; font-size: 28px; display: flex; align-items: center; justify-content: center; user-select: none; touch-action: none; }
-        .joy-btn:active { background: rgba(255,255,255,0.4); }
+        body { margin: 0; overflow: hidden; background: #1e293b; touch-action: none; font-family: sans-serif; }
+        #login-screen { position: absolute; width: 100%; height: 100%; background: rgba(15,23,42,0.9); z-index: 1000; display: flex; align-items: center; justify-content: center; color: white; }
+        .box { background: #334155; padding: 30px; border-radius: 15px; border: 3px solid #fbbf24; text-align: center; }
+        input { padding: 10px; margin: 10px; border-radius: 5px; border: none; width: 200px; display: block; }
+        #controls { position: absolute; bottom: 40px; left: 20px; z-index: 500; display: none; }
+        .grid { display: grid; grid-template-columns: repeat(3, 70px); gap: 10px; }
+        .btn { width: 70px; height: 70px; background: rgba(255,255,255,0.2); border: 2px solid white; border-radius: 50%; color: white; font-size: 24px; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
-
     <div id="login-screen">
         <div class="box">
-            <h2 style="color: #fbbf24; margin-bottom: 20px;">قناص الدراسات 🎯</h2>
-            <input type="text" id="uname" placeholder="ادخل اسمك">
-            <input type="text" id="uroom" placeholder="رقم الروم (مثلاً 55)">
-            <button class="btn" onclick="enterGame()">دخول اللعبة</button>
+            <h2>🎯 قناص الدراسات</h2>
+            <input type="text" id="uname" placeholder="اسمك">
+            <input type="text" id="uroom" placeholder="رقم الروم">
+            <button onclick="enter()" style="background:#fbbf24; border:none; padding:10px 20px; border-radius:5px; font-weight:bold;">دخول</button>
         </div>
     </div>
-
     <div id="controls">
-        <div class="joy-grid">
-            <div></div><div class="joy-btn" id="btn-u">↑</div><div></div>
-            <div class="joy-btn" id="btn-l">←</div><div class="joy-btn" id="btn-d">↓</div><div class="joy-btn" id="btn-r">→</div>
+        <div class="grid">
+            <div></div><div class="btn" id="btn-u">↑</div><div></div>
+            <div class="btn" id="btn-l">←</div><div class="btn" id="btn-d">↓</div><div class="btn" id="btn-r">→</div>
         </div>
     </div>
-
     <script src="script.js"></script>
     <script>
-        function enterGame() {
+        function enter() {
             let n = document.getElementById('uname').value;
             let r = document.getElementById('uroom').value;
             if(n && r) {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('controls').style.display = 'block';
                 startMultiplayer(n, r);
-            } else {
-                alert("برجاء إدخال الاسم ورقم الروم");
             }
         }
     </script>
