@@ -1,149 +1,196 @@
-let socket, myId, myRoom;
-let players = {};
-let zombies = [];
-let bullets = [];
-let score = 0, ammo = 15, hp = 100, castleHP = 500;
-let gameStarted = false;
-let myX = 1500, myY = 1500, myAngle = 0; // إحداثيات افتراضية عشان تبدأ فوراً
+let socket, myId, myRoom, gameStarted = false;
+let myX = 1500, myY = 1500, myAngle = 0;
+let players = {}, zombies = [], bullets = [], mines = [], spikes = [];
+let score = 0, ammo = 20, hp = 100, castleHP = 500;
+let defenseActive = true, quizTimer = 0, quizActive = false;
 
+// إعداد الخريطة والكاميرا
 function setup() {
     let canvas = createCanvas(windowWidth, windowHeight);
     canvas.style('display', 'block');
-    
-    // إنشاء زومبي محلي فوراً عشان اللعبة متبقاش فاضية
-    for(let i=0; i<5; i++) {
-        zombies.push({ id: Math.random(), x: random(1000, 2000), y: random(1000, 2000), hp: 50 });
-    }
+    // توليد زومبي عشوائي في البداية
+    for(let i=0; i<8; i++) spawnZombie();
 }
 
 function startMultiplayer(name, room) {
     myRoom = room;
-    // محاولة الاتصال بالسيرفر (لو السيرفر واقف اللعبة هتكمل عادي)
-    try {
-        socket = io();
-        socket.emit('join', { name, room });
-        socket.on('updateState', (state) => {
-            players = state.players;
-            myId = socket.id;
-        });
-        socket.on('newZombie', (z) => { zombies.push(z); });
-        socket.on('playerMoved', (p) => { if(p.room === myRoom) players[p.id] = p; });
-    } catch(e) { console.log("لعب فردي حالياً"); }
-    
     gameStarted = true;
+    // (هنا يمكن إضافة ربط السيرفر لاحقاً بنفس الطريقة السابقة)
 }
 
 function draw() {
     if (!gameStarted) return;
 
-    background(20, 25, 35); // لون الخريطة
+    background(30, 35, 45);
 
-    // الكاميرا تتبع اللاعب
+    // الكاميرا تتبع اللاعب بحرية
     translate(width/2 - myX, height/2 - myY);
 
-    // رسم القلعة
-    drawCastle();
+    // رسم الأرضية (شبكة لتوضيح الحركة)
+    drawGrid();
 
-    // رسم الزومبي وتحريكهم
-    for (let i = zombies.length - 1; i >= 0; i--) {
-        let z = zombies[i];
-        drawZombie(z.x, z.y);
-        
-        // ذكاء اصطناعي للزومبي (يطارد القلعة)
-        let angle = atan2(1500 - z.y, 1500 - z.x);
-        z.x += cos(angle) * 1.5;
-        z.y += sin(angle) * 1.5;
+    // رسم القلعة والحماية
+    drawDefense();
 
-        // لمس الزومبي للقلعة
-        if (dist(z.x, z.y, 1500, 1500) < 100) castleHP -= 0.1;
-        
-        // لمس الزومبي للاعب
-        if (dist(z.x, z.y, myX, myY) < 40) hp -= 0.2;
-    }
+    // إدارة الألغام والشوك
+    handleTraps();
 
-    // رسم اللاعب (أنا)
-    drawPlayer(myX, myY, myAngle, true);
+    // إدارة الزومبي
+    handleZombies();
 
     // رسم الرصاص
     for (let i = bullets.length - 1; i >= 0; i--) {
         bullets[i].update();
         bullets[i].draw();
-        // قتل الزومبي
-        for(let j = zombies.length-1; j>=0; j--) {
-            if(dist(bullets[i].x, bullets[i].y, zombies[j].x, zombies[j].y) < 30) {
-                zombies.splice(j, 1);
-                bullets.splice(i, 1);
-                score += 100;
-                break;
+        if (bullets[i].offScreen()) bullets.splice(i, 1);
+    }
+
+    // رسم اللاعب (أنا)
+    drawPlayer(myX, myY, myAngle, true);
+
+    resetMatrix();
+    drawHUD();
+    controlLogic();
+    checkQuizCondition();
+}
+
+function drawGrid() {
+    stroke(50);
+    for (let x = 0; x < 3000; x += 100) line(x, 0, x, 3000);
+    for (let y = 0; y < 3000; y += 100) line(0, y, 3000, y);
+}
+
+function drawDefense() {
+    // القلعة
+    fill(80); stroke(200); strokeWeight(4);
+    rect(1400, 1400, 200, 200, 10);
+    
+    // سور الحماية (يختفي لو التحدي فشل)
+    if (defenseActive) {
+        noFill(); stroke(0, 200, 255, 150); strokeWeight(10);
+        ellipse(1500, 1500, 400); 
+    }
+}
+
+function handleTraps() {
+    // الألغام
+    for (let i = mines.length - 1; i >= 0; i--) {
+        fill(255, 0, 0); stroke(255); strokeWeight(2);
+        ellipse(mines[i].x, mines[i].y, 20);
+    }
+    // الشوك
+    for (let s of spikes) {
+        fill(150); stroke(50);
+        triangle(s.x, s.y-15, s.x-10, s.y+5, s.x+10, s.y+5);
+    }
+}
+
+function handleZombies() {
+    for (let i = zombies.length - 1; i >= 0; i--) {
+        let z = zombies[i];
+        // رسم الزومبي
+        fill(50, 150, 50); ellipse(z.x, z.y, 40);
+        
+        // حركة الزومبي نحو القلعة أو اللاعب
+        let target = (dist(z.x, z.y, myX, myY) < 300) ? {x: myX, y: myY} : {x: 1500, y: 1500};
+        let angle = atan2(target.y - z.y, target.x - z.x);
+        z.x += cos(angle) * 1.5;
+        z.y += sin(angle) * 1.5;
+
+        // تصادم مع الشوك (يُبطئ الزومبي ويقتله ببطء)
+        for (let s of spikes) {
+            if (dist(z.x, z.y, s.x, s.y) < 30) { z.x -= cos(angle)*1; z.y -= sin(angle)*1; }
+        }
+
+        // انفجار لغم
+        for (let j = mines.length - 1; j >= 0; j--) {
+            if (dist(z.x, z.y, mines[j].x, mines[j].y) < 40) {
+                zombies.splice(i, 1); mines.splice(j, 1); score += 150; spawnZombie();
+                return;
             }
         }
     }
-
-    resetMatrix();
-    updateUI();
-    moveLogic();
 }
 
-function drawCastle() {
-    fill(100); stroke(251, 191, 36); strokeWeight(4);
-    rect(1400, 1400, 200, 200, 15);
-    fill(255, 0, 0); noStroke();
-    rect(1410, 1380, map(castleHP, 0, 500, 0, 180), 10); // بار دم القلعة
-}
-
-function drawPlayer(x, y, a, isMe) {
-    push();
-    translate(x, y);
-    rotate(a);
-    fill(isMe ? "#4ade80" : "#3b82f6");
-    stroke(255);
-    ellipse(0, 0, 45);
-    fill(50); rect(15, -7, 20, 14); // السلاح
-    pop();
-}
-
-function drawZombie(x, y) {
-    fill(50, 150, 50); stroke(0);
-    ellipse(x, y, 40);
-    fill(255, 0, 0); ellipse(x+10, y-8, 5); ellipse(x+10, y+8, 5);
-}
-
-function moveLogic() {
+function controlLogic() {
     let speed = 5;
-    if (keyIsDown(65) || keyIsDown(LEFT_ARROW)) myX -= speed;
-    if (keyIsDown(68) || keyIsDown(RIGHT_ARROW)) myX += speed;
-    if (keyIsDown(87) || keyIsDown(UP_ARROW)) myY -= speed;
-    if (keyIsDown(83) || keyIsDown(DOWN_ARROW)) myY += speed;
+    if (keyIsDown(65)) myX -= speed; // A
+    if (keyIsDown(68)) myX += speed; // D
+    if (keyIsDown(87)) myY -= speed; // W
+    if (keyIsDown(83)) myY += speed; // S
     
-    // التحكم باللمس (لو ضغطت على الشاشة اللاعب يلف ناحية الضغطة)
-    if (mouseIsPressed) {
-        myAngle = atan2(mouseY - height/2, mouseX - width/2);
+    myAngle = atan2(mouseY - height/2, mouseX - width/2);
+}
+
+function checkQuizCondition() {
+    // كل دقيقة الحماية بتختفي
+    if (frameCount % 3600 === 0 && !quizActive) {
+        defenseActive = false;
+        quizActive = true;
+        startUrgentQuiz();
     }
+}
+
+async function startUrgentQuiz() {
+    alert("⚠️ الحماية سقطت! حل 5 أسئلة في 30 ثانية لإعادتها!");
+    let correctCount = 0;
+    let startTime = Date.now();
     
-    if (socket && socket.connected) {
-        socket.emit('move', { x: myX, y: myY, angle: myAngle, room: myRoom });
+    for(let i=0; i<5; i++) {
+        let a = floor(random(1, 10)), b = floor(random(1, 10));
+        let ans = prompt(`سؤال ${i+1}: كم ناتج ${a} + ${b}?`);
+        if (ans == (a + b)) correctCount++;
     }
+
+    let timeTaken = (Date.now() - startTime) / 1000;
+    if (correctCount === 5 && timeTaken <= 30) {
+        defenseActive = true;
+        alert("✅ بطل! الحماية عادت");
+    } else {
+        alert("❌ فشلت! الزومبي سيهاجمون القلعة الآن!");
+    }
+    quizActive = false;
 }
 
 function mousePressed() {
-    if (gameStarted && ammo > 0) {
+    if (ammo > 0) {
         bullets.push(new Bullet(myX, myY, myAngle));
         ammo--;
-    } else if (ammo <= 0) {
-        let ans = prompt("سؤال دراسات سريع: ما هي أعلى قمة جبلية في مصر؟");
-        if(ans && ans.includes("كاترين")) { ammo = 15; alert("رصاصك اتعمر!"); }
+    }
+}
+
+function keyPressed() {
+    if (key === 'm' || key === 'M') { // شراء لغم بـ 500 نقطة
+        if (score >= 500) { score -= 500; mines.push({x: myX, y: myY}); }
+    }
+    if (key === 's' || key === 'S' && !keyIsDown(83)) { // شراء شوك بـ 300 نقطة
+        if (score >= 300) { score -= 300; spikes.push({x: myX, y: myY}); }
     }
 }
 
 class Bullet {
     constructor(x, y, a) { this.x = x; this.y = y; this.a = a; }
-    update() { this.x += cos(this.a) * 12; this.y += sin(this.a) * 12; }
-    draw() { fill(255, 255, 0); noStroke(); ellipse(this.x, this.y, 8); }
+    update() { this.x += cos(this.a) * 15; this.y += sin(this.a) * 15; }
+    draw() { fill(255, 250, 0); ellipse(this.x, this.y, 8); }
+    offScreen() { return dist(this.x, this.y, myX, myY) > 1000; }
 }
 
-function updateUI() {
-    document.getElementById('score-val').innerText = score;
-    document.getElementById('ammo-val').innerText = ammo;
-    document.getElementById('hp-val').innerText = Math.ceil(hp);
-    document.getElementById('castle-val').innerText = Math.ceil(castleHP);
+function spawnZombie() {
+    zombies.push({x: random(0, 3000), y: random(0, 3000)});
+}
+
+function drawPlayer(x, y, a, isMe) {
+    push(); translate(x, y); rotate(a);
+    fill(0, 255, 100); ellipse(0, 0, 45);
+    fill(50); rect(15, -7, 20, 14);
+    pop();
+}
+
+function drawHUD() {
+    fill(0, 150); rect(10, 10, 250, 150, 10);
+    fill(255); textSize(16);
+    text(`💰 السكور: ${score}`, 20, 40);
+    text(`🔋 الرصاص: ${ammo}`, 20, 70);
+    text(`🛡️ الحماية: ${defenseActive ? "فعالة" : "معطلة"}`, 20, 100);
+    text(`🛒 M: لغم (500) | S: شوك (300)`, 20, 130);
 }
