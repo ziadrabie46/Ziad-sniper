@@ -3,62 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>أساطير القلعة 🧟</title>
-    <script src="/socket.io/socket.io.js"></script>
+    <title>ALHOR SNIPER | قناص الدراسات 🏹</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <style>
-        body { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: sans-serif; touch-action: none; }
+        body { margin: 0; padding: 0; background: #0a0a0a; overflow: hidden; font-family: 'Segoe UI', sans-serif; touch-action: none; }
         #ui-layer { position: absolute; top: 10px; left: 10px; z-index: 100; pointer-events: none; }
-        .stat { background: rgba(0,0,0,0.8); color: #fbbf24; padding: 5px 15px; margin: 5px; border-left: 4px solid #fbbf24; border-radius: 4px; font-size: 14px; }
-        
-        /* أزرار الموبايل */
-        .joy-btn, .act-btn { 
-            width: 60px; height: 60px; border-radius: 50%; border: 2px solid white; 
-            color: white; font-weight: bold; font-size: 20px; background: rgba(255,255,255,0.2);
-            display: flex; align-items: center; justify-content: center; user-select: none;
-        }
-        .act-btn { width: 80px; height: 80px; font-size: 14px; border-radius: 15px; }
-
-        #login-screen { position: absolute; width: 100%; height: 100%; background: #111; z-index: 1000; display: flex; justify-content: center; align-items: center; color: white; }
+        .stat { background: rgba(0,0,0,0.85); color: #fbbf24; padding: 8px 15px; margin: 5px; border-radius: 8px; border-right: 4px solid #fbbf24; font-weight: bold; min-width: 120px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        #login-screen { position: absolute; width: 100%; height: 100%; background: radial-gradient(#222, #000); z-index: 1000; display: flex; justify-content: center; align-items: center; color: white; }
+        .joy-btn { width: 70px; height: 70px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px solid #fbbf24; color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; user-select: none; }
+        .act-btn { width: 90px; height: 90px; border-radius: 20px; background: rgba(255,0,0,0.5); border: 2px solid white; color: white; font-weight: bold; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="login-screen">
-        <div style="text-align: center; background: #222; padding: 30px; border-radius: 15px; border: 2px solid #fbbf24;">
-            <h2>قناص الدراسات 🎯</h2>
-            <input type="text" id="pName" placeholder="اسمك" style="padding:10px; margin:10px; width:80%;">
-            <br>
-            <button onclick="enterGame()" style="background:#fbbf24; border:none; padding:10px 20px; font-weight:bold; cursor:pointer;">ابدأ المعركة</button>
-        </div>
+<div id="login-screen">
+    <div style="text-align: center; background: rgba(30,30,30,0.9); padding: 40px; border-radius: 20px; border: 2px solid #fbbf24;">
+        <h1 style="color:#fbbf24; margin-bottom:10px;">ALHOR SNIPER 🧟</h1>
+        <p>استعد لمراجعة الإنجليزية والبقاء على قيد الحياة</p>
+        <input type="text" id="pName" placeholder="اكتب اسمك يا بطل" style="padding:12px; margin:20px; width:80%; border-radius:5px; border:none;">
+        <br>
+        <button onclick="startGame()" style="background:#fbbf24; color:black; padding:15px 40px; font-weight:bold; border-radius:10px; cursor:pointer; border:none; font-size:18px;">دخول المعركة ⚔️</button>
     </div>
+</div>
 
-    <div id="ui-layer">
-        <div class="stat">💰 النقط: <span id="score">0</span></div>
-        <div class="stat">🔋 الرصاص: <span id="ammo">20</span></div>
-        <div class="stat">🛡️ الحماية: <span id="defense">فعالة</span></div>
-    </div>
+<div id="ui-layer">
+    <div class="stat">🏆 السكور: <span id="score">0</span></div>
+    <div class="stat">🔋 الرصاص: <span id="ammo">20</span></div>
+    <div class="stat">❤️ الصحة: <span id="hp">100</span></div>
+    <div class="stat">🛡️ الدرع: <span id="defense">فعال</span></div>
+    <div class="stat" style="color:#4ade80;">🎖️ الرتبة: <span id="rank">مبتدئ</span></div>
+</div>
 
-    <div id="mobile-ctrl" style="position: absolute; bottom: 20px; left: 20px; z-index: 100; display: grid; grid-template-columns: repeat(3, 60px); gap: 10px;">
-        <div></div><div class="joy-btn" id="upBtn">↑</div><div></div>
-        <div class="joy-btn" id="leftBtn">←</div><div class="joy-btn" id="downBtn">↓</div><div class="joy-btn" id="rightBtn">→</div>
-    </div>
+<div id="mobile-ctrl" style="position: absolute; bottom: 30px; left: 30px; z-index: 100; display: grid; grid-template-columns: repeat(3, 75px); gap: 10px;">
+    <div></div><div class="joy-btn" id="upBtn">↑</div><div></div>
+    <div class="joy-btn" id="leftBtn">←</div><div class="joy-btn" id="downBtn">↓</div><div class="joy-btn" id="rightBtn">→</div style="display: none;">
+</div>
 
-    <div id="action-btns" style="position: absolute; bottom: 20px; right: 20px; z-index: 100; display: flex; flex-direction: column; gap: 15px;">
-        <div class="act-btn" style="background: rgba(255,0,0,0.6);" id="shootBtn">🔥 ضرب</div>
-        <div class="act-btn" style="background: rgba(255,165,0,0.6);" id="mineBtn">💣 لغم</div>
-        <div class="act-btn" style="background: rgba(128,128,128,0.6);" id="spikeBtn">⚙️ شوك</div>
-    </div>
+<div id="action-btns" style="position: absolute; bottom: 30px; right: 30px; z-index: 100; display: flex; flex-direction: column;">
+    <div class="act-btn" style="background: rgba(255,0,0,0.7);" id="shootBtn">FIRE 🔥</div>
+    <div class="act-btn" style="background: rgba(255,165,0,0.7); height: 60px;" id="mineBtn">لغم (500)</div>
+    <div class="act-btn" style="background: rgba(100,100,100,0.7); height: 60px;" id="spikeBtn">شوك (300)</div>
+</div>
 
-    <script src="script.js"></script>
-    <script>
-        function enterGame() {
-            let n = document.getElementById('pName').value;
-            if(n) {
-                document.getElementById('login-screen').style.display = 'none';
-                startMultiplayer(n, "room1");
-            }
+<script src="script.js"></script>
+<script>
+    function startGame() {
+        let n = document.getElementById('pName').value;
+        if(n) {
+            document.getElementById('login-screen').style.display = 'none';
+            startLocalGame(n);
         }
-    </script>
+    }
+</script>
 </body>
 </html>
