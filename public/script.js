@@ -5,6 +5,40 @@ let score = 0, ammo = 20, hp = 100, castleHP = 500;
 let defenseActive = true, quizActive = false;
 let moveState = { up: false, down: false, left: false, right: false };
 
+// 📘 بنك أسئلة الإنجليزي (Grade 6 - Term 2)
+const englishQuiz = [
+    { q: "My brother _____ to school every morning.", a: "goes" },
+    { q: "We _____ basketball yesterday.", a: "played" },
+    { q: "Choose the opposite of 'strong':", a: "weak" },
+    { q: "Mona is _____ than Salma.", a: "taller" },
+    { q: "I _____ my homework now.", a: "am doing" },
+    { q: "They _____ TV at the moment.", a: "are watching" },
+    { q: "Yesterday, Ali _____ to the club.", a: "went" },
+    { q: "Ahmed is my friend. _____ is kind.", a: "He" },
+    { q: "What is the plural of 'tooth'?", a: "teeth" },
+    { q: "I saw _____ elephant at the zoo.", a: "an" },
+    { q: "_____ is your birthday?", a: "When" },
+    { q: "The ball is _____ the box (under/from).", a: "under" },
+    { q: "We use our eyes to _____.", a: "see" },
+    { q: "She _____ English very well.", a: "speaks" },
+    { q: "There _____ a cat in the garden (is/are).", a: "is" },
+    { q: "Which word is an adjective? (run/beautiful).", a: "beautiful" },
+    { q: "Don't _____ noisy in class.", a: "be" },
+    { q: "We _____ dinner when the lights went out.", a: "were eating" },
+    { q: "Correct spelling: (because/becuse).", a: "because" },
+    { q: "The sun _____ in the east.", a: "rises" },
+    { q: "How _____ apples do you have?", a: "many" },
+    { q: "My mother is _____ doctor (a/an).", a: "a" },
+    { q: "I _____ never visited Luxor before.", a: "have" },
+    { q: "They _____ happy after the match.", a: "were" },
+    { q: "Correct: (She like/She likes) apples.", a: "She likes" },
+    { q: "The book is _____ the table (in/on).", a: "on" },
+    { q: "We _____ to music every evening.", a: "listen" },
+    { q: "Where (do/does) you live?", a: "do" },
+    { q: "A camel can live in the _____.", a: "desert" },
+    { q: "I was tired, _____ I went to bed early.", a: "so" }
+];
+
 function setup() {
     let canvas = createCanvas(windowWidth, windowHeight);
     canvas.style('display', 'block');
@@ -15,20 +49,17 @@ function setup() {
 function setupMobileControls() {
     const bind = (id, dir) => {
         let el = document.getElementById(id);
+        if(!el) return;
         el.ontouchstart = (e) => { e.preventDefault(); moveState[dir] = true; };
         el.ontouchend = (e) => { e.preventDefault(); moveState[dir] = false; };
     };
     bind('upBtn', 'up'); bind('downBtn', 'down'); bind('leftBtn', 'left'); bind('rightBtn', 'right');
-    
-    document.getElementById('shootBtn').ontouchstart = (e) => { e.preventDefault(); shoot(); };
-    document.getElementById('mineBtn').ontouchstart = (e) => { e.preventDefault(); buyMine(); };
-    document.getElementById('spikeBtn').ontouchstart = (e) => { e.preventDefault(); buySpikes(); };
 }
 
 function startMultiplayer(name, room) {
     myRoom = room;
     gameStarted = true;
-    try { socket = io(); socket.emit('join', {name, room}); } catch(e) {}
+    try { socket = io(); socket.emit('join', {name, room}); } catch(e) { console.log("Offline Mode"); }
 }
 
 function draw() {
@@ -38,29 +69,35 @@ function draw() {
     // الكاميرا تتبع اللاعب
     translate(width/2 - myX, height/2 - myY);
 
-    // رسم القلعة والحماية
+    drawGrid();
     drawCastle();
-
-    // إدارة العناصر
     handleZombies();
     handleTraps();
     
-    for (let b of bullets) { b.update(); b.draw(); }
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        bullets[i].update();
+        bullets[i].draw();
+        if(bullets[i].offScreen()) bullets.splice(i, 1);
+    }
 
-    // رسم اللاعب
     drawPlayer(myX, myY, myAngle);
-
     resetMatrix();
     updateUI();
     controlLogic();
     checkAutoChallenge();
 }
 
+function drawGrid() {
+    stroke(40);
+    for (let x = 0; x < 3000; x += 100) line(x, 0, x, 3000);
+    for (let y = 0; y < 3000; y += 100) line(0, y, 3000, y);
+}
+
 function drawCastle() {
     fill(70); stroke(251, 191, 36); strokeWeight(4);
     rect(1400, 1400, 200, 200, 15);
     if (defenseActive) {
-        noFill(); stroke(0, 255, 255, 100); strokeWeight(8);
+        noFill(); stroke(0, 255, 255, 120); strokeWeight(8);
         ellipse(1500, 1500, 450);
     }
 }
@@ -68,26 +105,28 @@ function drawCastle() {
 function handleZombies() {
     for (let i = zombies.length - 1; i >= 0; i--) {
         let z = zombies[i];
-        fill(50, 150, 50); ellipse(z.x, z.y, 40);
-        let target = (dist(z.x, z.y, myX, myY) < 300) ? {x:myX, y:myY} : {x:1500, y:1500};
+        fill(50, 150, 50); stroke(0); ellipse(z.x, z.y, 40);
+        let target = (dist(z.x, z.y, myX, myY) < 350) ? {x:myX, y:myY} : {x:1500, y:1500};
         let angle = atan2(target.y - z.y, target.x - z.x);
         
-        // لو الحماية شغالة، الزومبي ميعرفش يقرب للقلعة
         if (defenseActive && dist(z.x, z.y, 1500, 1500) < 230) {
             z.x -= cos(angle) * 2; z.y -= sin(angle) * 2;
         } else {
             z.x += cos(angle) * 1.5; z.y += sin(angle) * 1.5;
         }
 
-        // قتل الزومبي بالرصاص
-        for(let b of bullets) {
-            if(dist(b.x, b.y, z.x, z.y) < 30) { zombies.splice(i, 1); score += 100; spawnZombie(); break; }
+        // تصادم مع الرصاص
+        for(let j = bullets.length - 1; j >= 0; j--) {
+            if(dist(bullets[j].x, bullets[j].y, z.x, z.y) < 30) {
+                zombies.splice(i, 1); bullets.splice(j, 1); score += 100; spawnZombie();
+                break;
+            }
         }
     }
 }
 
 function controlLogic() {
-    let speed = 5;
+    let speed = 6;
     if (keyIsDown(65) || moveState.left) myX -= speed;
     if (keyIsDown(68) || moveState.right) myX += speed;
     if (keyIsDown(87) || moveState.up) myY -= speed;
@@ -101,7 +140,7 @@ function controlLogic() {
 }
 
 function checkAutoChallenge() {
-    if (frameCount % 3000 === 0 && !quizActive) { // كل دقيقة تقريباً
+    if (frameCount % 3600 === 0 && !quizActive) { 
         defenseActive = false;
         quizActive = true;
         runQuizChallenge();
@@ -109,25 +148,32 @@ function checkAutoChallenge() {
 }
 
 async function runQuizChallenge() {
-    alert("⚠️ سقطت الحماية! أجب عن 5 أسئلة في 30 ثانية!");
-    let correct = 0;
-    let start = Date.now();
+    alert("⚠️ EMERGENCY! الحماية سقطت! حل 5 أسئلة إنجليزي في 30 ثانية!");
+    let correct = 0; let start = Date.now();
+    let selected = englishQuiz.sort(() => 0.5 - Math.random()).slice(0, 5);
+
     for(let i=0; i<5; i++) {
-        let n1 = floor(random(1,10)), n2 = floor(random(1,10));
-        let ans = prompt(`سؤال ${i+1}: ${n1} + ${n2} = ?`);
-        if(ans == (n1+n2)) correct++;
+        let ans = prompt(`Question ${i+1}: ${selected[i].q}`);
+        if(ans && ans.toLowerCase().trim() === selected[i].a.toLowerCase()) correct++;
     }
+
     if(correct === 5 && (Date.now()-start) < 30000) {
-        defenseActive = true; alert("✅ أحسنت! عادت الحماية");
+        defenseActive = true; alert("✅ أحسنت يا بطل! عادت الحماية");
     } else {
-        alert("❌ فشلت! الزومبي سيحطمون القلعة الآن!");
+        alert("❌ فشلت! الزومبي سيهاجمون القلعة الآن!");
+        castleHP -= 100;
     }
     quizActive = false;
 }
 
 function shoot() {
     if(ammo > 0) { bullets.push(new Bullet(myX, myY, myAngle)); ammo--; }
-    else { alert("نفذ الرصاص!"); }
+    else { 
+        alert("خلصت الرصاص! حل السؤال ده عشان تعمر:");
+        let q = englishQuiz[Math.floor(random(englishQuiz.length))];
+        let ans = prompt(q.q);
+        if(ans && ans.toLowerCase().trim() === q.a.toLowerCase()) { ammo = 20; alert("🔋 تعمر!"); }
+    }
 }
 
 function buyMine() { if(score >= 500) { score -= 500; mines.push({x:myX, y:myY}); } }
@@ -155,6 +201,7 @@ function updateUI() {
 
 class Bullet {
     constructor(x, y, a) { this.x = x; this.y = y; this.a = a; }
-    update() { this.x += cos(this.a) * 12; this.y += sin(this.a) * 12; }
+    update() { this.x += cos(this.a) * 15; this.y += sin(this.a) * 15; }
     draw() { fill(255,255,0); noStroke(); ellipse(this.x, this.y, 8); }
+    offScreen() { return dist(this.x, this.y, myX, myY) > 1000; }
 }
